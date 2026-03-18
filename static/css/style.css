@@ -31,6 +31,8 @@ body {
 }
 
 .nav-link {
+    display: inline-flex;
+    align-items: center;
     border-radius: 0.75rem;
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
@@ -313,9 +315,29 @@ body {
 }
 
 @media (max-width: 768px) {
+    .nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.58rem 0.72rem;
+    }
+
+    #menuItems {
+        border-top: 1px solid #e2e8f0;
+        margin-top: 0.35rem;
+        padding-top: 0.6rem;
+    }
+
+    #fwdChatOpen {
+        right: 0.75rem;
+        bottom: max(0.75rem, env(safe-area-inset-bottom));
+        padding: 0.62rem 0.95rem;
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
     .fwdchat-panel {
         right: 0.75rem;
-        bottom: 4.5rem;
+        bottom: calc(3.4rem + max(0.75rem, env(safe-area-inset-bottom)));
         width: calc(100vw - 1.5rem);
     }
 

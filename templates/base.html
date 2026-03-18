@@ -18,15 +18,15 @@
 <body class="min-h-screen font-[Sora] bg-slate-50 text-slate-800">
     <div class="page-glow"></div>
     <header class="sticky top-0 z-40 border-b border-white/30 bg-white/85 backdrop-blur-lg">
-        <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-2 px-4 py-3">
             <a href="{{ url_for('home') }}" class="flex items-center gap-3 text-lg font-bold tracking-tight text-slate-900">
                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 text-xs font-extrabold text-white shadow-lg shadow-blue-200/60">FWD</span>
                 <span>FWD</span>
             </a>
 
-            <button id="menuToggle" class="rounded-md border border-slate-300 px-3 py-2 text-sm md:hidden">Menu</button>
+            <button id="menuToggle" class="ml-auto rounded-md border border-slate-300 px-3 py-2 text-sm md:hidden">Menu</button>
 
-            <div id="menuItems" class="hidden w-full flex-col gap-2 pt-3 md:flex md:w-auto md:flex-row md:items-center md:pt-0">
+            <div id="menuItems" class="hidden basis-full flex-col gap-2 pt-2 md:flex md:basis-auto md:flex-row md:items-center md:gap-1 md:pt-0">
                 <a class="nav-link" href="{{ url_for('home') }}">Home</a>
                 {% if is_authenticated and current_role == 'donor' %}
                     <a class="nav-link nav-link-donor" href="{{ url_for('donor_dashboard') }}">Dashboard</a>
@@ -61,7 +61,7 @@
         </nav>
     </header>
 
-    <main class="mx-auto w-full max-w-6xl px-4 py-6 md:py-10">
+    <main class="mx-auto w-full max-w-6xl px-4 py-6 pb-28 md:py-10 md:pb-10">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mb-6 space-y-3">
