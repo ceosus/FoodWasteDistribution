@@ -461,6 +461,21 @@ def home():
     return render_template("home.html", stats=stats, role_route=role_route)
 
 
+@app.get("/privacy-policy")
+def privacy_policy():
+    return render_template("legal/privacy.html")
+
+
+@app.get("/terms-of-use")
+def terms_of_use():
+    return render_template("legal/terms.html")
+
+
+@app.get("/contact")
+def contact_page():
+    return render_template("legal/contact.html")
+
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
