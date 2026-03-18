@@ -1,0 +1,74 @@
+[
+  {
+    "intent": "Platform Scope",
+    "question": "Is FWD a mobile app?",
+    "answer": "FWD is currently web-based only. Users access it through the browser, not from Play Store or App Store apps.",
+    "keywords": ["mobile", "app", "play store", "app store", "download", "web"]
+  },
+  {
+    "intent": "Account Creation",
+    "question": "How do I create an account?",
+    "answer": "Open the Register page on the FWD website, choose your role (donor or NGO), and submit username, password, organization name, location, and contact.",
+    "keywords": ["register", "signup", "sign up", "create account", "donor", "ngo"]
+  },
+  {
+    "intent": "Login",
+    "question": "How do I log in?",
+    "answer": "Use your username and password on the Login page. After login, you are redirected to the dashboard for your role.",
+    "keywords": ["login", "sign in", "username", "password", "dashboard"]
+  },
+  {
+    "intent": "Registration Fields",
+    "question": "What details are needed during registration?",
+    "answer": "FWD registration uses username, password, role, organization name, location, and contact details. It does not require app download steps.",
+    "keywords": ["fields", "required", "registration", "contact", "details"]
+  },
+  {
+    "intent": "Donor Listing",
+    "question": "How does a donor post food?",
+    "answer": "Donors use Add Food from the donor dashboard, then enter food name, quantity, donation price, expiry, category, description, and pickup location.",
+    "keywords": ["donor", "post", "add food", "listing", "pickup"]
+  },
+  {
+    "intent": "Donation Pricing",
+    "question": "Is food free in FWD?",
+    "answer": "FWD supports low-cost donation pricing per unit. The donation price must be greater than zero.",
+    "keywords": ["price", "cost", "free", "donation price", "rate"]
+  },
+  {
+    "intent": "NGO Claim Flow",
+    "question": "How does an NGO claim food?",
+    "answer": "NGOs browse available listings, open a listing, and claim it. Claimed listings then appear in NGO and donor dashboards.",
+    "keywords": ["ngo", "claim", "available", "listing", "dashboard"]
+  },
+  {
+    "intent": "Collection Status",
+    "question": "How is collection confirmed?",
+    "answer": "After claim, listing status progresses through available to claimed to collected, so both sides can track fulfillment.",
+    "keywords": ["collected", "status", "fulfilled", "track", "workflow"]
+  },
+  {
+    "intent": "Messaging",
+    "question": "Can donor and NGO message each other?",
+    "answer": "Yes. FWD has built-in two-way messaging so donors and NGOs can coordinate pickup and listing details.",
+    "keywords": ["message", "chat", "inbox", "conversation", "coordination"]
+  },
+  {
+    "intent": "Map and Distance",
+    "question": "Is location mapping available?",
+    "answer": "Yes. FWD includes map pinning, address lookup suggestions, and distance/ETA-style guidance for donor and NGO coordination.",
+    "keywords": ["map", "location", "distance", "eta", "address"]
+  },
+  {
+    "intent": "Chatbot Scope",
+    "question": "What can fwdChat answer?",
+    "answer": "fwdChat answers only FWD-related questions about account flow, listings, claims, messaging, maps, dashboards, and statuses.",
+    "keywords": ["fwdchat", "scope", "questions", "help", "support"]
+  },
+  {
+    "intent": "Notifications",
+    "question": "Does FWD send app push or email notifications?",
+    "answer": "In the current web build, native app-push notifications are not available. Coordination primarily happens through in-app dashboard updates and messaging.",
+    "keywords": ["notification", "email", "push", "alert", "sms"]
+  }
+]

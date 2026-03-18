@@ -9,6 +9,7 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - Template Engine: Jinja2 
 
 ## Features
+- Web-based platform (currently no Android/iOS app)
 - Username/password authentication with hashed passwords
 - Role-based registration (`donor` or `ngo`)
 - Session-based login management
@@ -113,9 +114,9 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
    FWD_API_KEY_3=your_key_3
 
    # Alternate key names also supported
-   fwd-1-api=your_key_1
-   fwd-2-api=your_key_2
-   fwd-3-api=your_key_3
+   fwd_1_api=your_key_1
+   fwd_2_api=your_key_2
+   fwd_3_api=your_key_3
    ```
 5. Ensure MongoDB is running locally (Option A) or configure Atlas credentials (Option B).
 6. Run the Flask app:
@@ -139,8 +140,48 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - Sessions use Flask secret key.
 - Route decorators enforce authentication and role authorization.
 
+## Chatbot Dataset (Review Format)
+The chatbot is now grounded with an FWD-relevant dataset stored at `data/fwd_chatbot_dataset.json`.
+
+This dataset is used as runtime knowledge context so responses stay aligned with the current FWD web application.
+
+### Dataset Coverage
+| Intent | What it teaches the chatbot |
+|---|---|
+| Platform Scope | FWD is web-based only, no app-store flow |
+| Account Creation | Register flow and role selection |
+| Login | Username/password web login and dashboard redirect |
+| Registration Fields | Required registration fields in current build |
+| Donor Listing | How donors create listings |
+| Donation Pricing | Low-cost donation model (not free) |
+| NGO Claim Flow | NGO claim steps and availability workflow |
+| Collection Status | Status transitions (`available -> claimed -> collected`) |
+| Messaging | In-app donor/NGO conversation support |
+| Map and Distance | Address search, map pinning, distance guidance |
+| Chatbot Scope | Project-only support behavior |
+| Notifications | Current web limitations for push/email app notifications |
+
+### Dataset Entries (Current)
+1. Platform Scope: "FWD is currently web-based only..."
+2. Account Creation: "Register page -> role -> username/password/org/location/contact"
+3. Login: "Username/password login routes to role dashboard"
+4. Registration Fields: "Current required fields and no app-download step"
+5. Donor Listing: "Add food with quantity, price, expiry, location"
+6. Donation Pricing: "Low-cost donation pricing, must be > 0"
+7. NGO Claim Flow: "Browse available listings and claim"
+8. Collection Status: "available -> claimed -> collected"
+9. Messaging: "Two-way in-app donor/NGO messaging"
+10. Map and Distance: "Map pin, address suggestions, distance/ETA guidance"
+11. Chatbot Scope: "FWD-only questions"
+12. Notifications: "No native app push in current web build"
+
+### How "Training" Is Applied Here
+- Current implementation uses grounding (dataset-backed context injection) per question.
+- This avoids hallucinations like app-store/email-login instructions that do not match FWD.
+- If you want full model fine-tuning later, this same dataset can be exported to JSONL instruction format.
+
 ## Optional Improvements
 - Add CSRF protection with Flask-WTF
 - Add pagination and richer analytics
-- Add email/SMS notifications for claims
+- Add SMS or WhatsApp notifications for claims
 - Add expiry alerts and scheduled cleanup jobs

@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -28,16 +29,100 @@ messages_col = db.messages
 CHATBOT_MODEL = "llama-3.1-8b-instant"
 CHATBOT_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 CHATBOT_OFFTOPIC_REPLY = "I can only answer questions about the FWD project."
+CHATBOT_DATASET_PATH = os.path.join(os.path.dirname(__file__), "data", "fwd_chatbot_dataset.json")
 PROJECT_SYSTEM_PROMPT = (
     "You are fwdChat, the assistant for FWD (Food Waste Distribution), used by donors and NGOs. "
     "Be conversational and friendly, and answer user questions about how FWD works from a user perspective. "
+    "FWD is web-based only for now. Do not mention mobile apps, app store, play store, or app downloads. "
+    "Do not claim email-login or app-only onboarding. Account creation happens on the web register page. "
     "You can answer greetings like hi, hello, and hey. "
     "You can answer questions about food listings, claiming food, donor and NGO actions, dashboards, messaging, and app workflows. "
     "If a question is completely unrelated to FWD (for example sports, movies, or unrelated coding help), "
     "reply exactly: 'I can only answer questions about the FWD project.' "
+    "Use the provided FWD knowledge context as the source of truth. If a detail is not in that context, say it is not available yet in the current web app. "
     "Keep answers clear, concise, and focused on the user's question. "
     "Use 2-4 short lines, plain text only, and avoid markdown tables or code blocks."
 )
+
+
+def load_chatbot_dataset():
+    try:
+        with open(CHATBOT_DATASET_PATH, "r", encoding="utf-8") as dataset_file:
+            payload = json.load(dataset_file)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(payload, list):
+        return []
+
+    cleaned = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        answer = str(item.get("answer", "")).strip()
+        if not answer:
+            continue
+        cleaned.append(
+            {
+                "intent": str(item.get("intent", "General")).strip() or "General",
+                "question": str(item.get("question", "")).strip(),
+                "answer": answer,
+                "keywords": [
+                    str(keyword).strip().lower()
+                    for keyword in (item.get("keywords") or [])
+                    if str(keyword).strip()
+                ],
+            }
+        )
+    return cleaned
+
+
+CHATBOT_DATASET = load_chatbot_dataset()
+
+
+def _tokenize_text(text: str):
+    return set(re.findall(r"[a-z0-9]+", (text or "").lower()))
+
+
+def build_chatbot_context(question: str) -> str:
+    if not CHATBOT_DATASET:
+        return (
+            "FWD Knowledge Context:\n"
+            "- FWD is a web platform for donors and NGOs to coordinate surplus food distribution.\n"
+            "- If details are missing, answer conservatively and avoid inventing features."
+        )
+
+    question_tokens = _tokenize_text(question)
+    ranked_entries = []
+
+    for item in CHATBOT_DATASET:
+        searchable_text = " ".join(
+            [
+                item.get("intent", ""),
+                item.get("question", ""),
+                item.get("answer", ""),
+                " ".join(item.get("keywords", [])),
+            ]
+        )
+        entry_tokens = _tokenize_text(searchable_text)
+        overlap = len(question_tokens & entry_tokens)
+        if overlap > 0:
+            ranked_entries.append((overlap, item))
+
+    ranked_entries.sort(key=lambda row: row[0], reverse=True)
+    selected = [row[1] for row in ranked_entries[:5]]
+
+    if not selected:
+        selected = CHATBOT_DATASET[:5]
+
+    context_lines = ["FWD Knowledge Context (use these facts only):"]
+    for idx, item in enumerate(selected, start=1):
+        context_lines.append(
+            f"{idx}. Intent: {item.get('intent', 'General')} | "
+            f"Question: {item.get('question', '')} | "
+            f"Answer: {item.get('answer', '')}"
+        )
+    return "\n".join(context_lines)
 
 
 def create_indexes() -> None:
@@ -213,10 +298,11 @@ def ask_project_chatbot(question: str):
 
     payload = {
         "model": CHATBOT_MODEL,
-        "temperature": 0.1,
+        "temperature": 0.0,
         "max_tokens": 350,
         "messages": [
             {"role": "system", "content": PROJECT_SYSTEM_PROMPT},
+            {"role": "system", "content": build_chatbot_context(question)},
             {"role": "user", "content": question},
         ],
     }
