@@ -156,16 +156,16 @@ def get_chatbot_api_keys():
         "GROQ_API_KEY_1",
         "GROQ_API_KEY_2",
         "GROQ_API_KEY_3",
-        "fwd-1-api",
-        "fwd-2-api",
-        "fwd-3-api",
+        "fwd_1_api",
+        "fwd_2_api",
+        "fwd_3_api",
     ]:
         env_value = os.getenv(env_name)
         if env_value:
             key_candidates.append(_clean_env_value(env_value))
 
     dotenv_map = dotenv_values(".env")
-    for env_name in ["fwd-1-api", "fwd-2-api", "fwd-3-api"]:
+    for env_name in ["fwd_1_api", "fwd_2_api", "fwd_3_api"]:
         env_value = dotenv_map.get(env_name)
         if env_value:
             key_candidates.append(_clean_env_value(str(env_value)))
