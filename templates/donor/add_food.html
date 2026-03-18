@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit Food' if is_edit else 'Add Food' }} | FWD{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl">
+    <div class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm md:p-8">
+        <h1 class="text-2xl font-bold text-slate-900">{{ 'Edit Food Listing' if is_edit else 'Add Food Listing' }}</h1>
+        <p class="mt-2 text-sm text-slate-500">Provide accurate details so NGOs can collect safely and quickly.</p>
+
+        <form method="post" action="{{ url_for('donor_edit_food', listing_id=listing._id) if is_edit else url_for('donor_add_food') }}" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="md:col-span-1">
+                <label for="food_name" class="mb-1 block text-sm font-semibold">Food Name</label>
+                <input id="food_name" name="food_name" type="text" required value="{{ listing.food_name if listing else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="Vegetable Rice">
+            </div>
+
+            <div class="md:col-span-1">
+                <label for="quantity" class="mb-1 block text-sm font-semibold">Quantity</label>
+                <input id="quantity" name="quantity" type="number" min="1" required value="{{ listing.quantity if listing else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="50">
+            </div>
+
+            <div class="md:col-span-1">
+                <label for="donation_price" class="mb-1 block text-sm font-semibold">Donation Price Per Unit (Rs.)</label>
+                <input id="donation_price" name="donation_price" type="number" min="0.01" step="0.01" required value="{{ listing.donation_price if listing else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="10.00">
+            </div>
+
+            <div class="md:col-span-1">
+                <label for="expiry" class="mb-1 block text-sm font-semibold">Expiry Date/Time (UTC)</label>
+                <input id="expiry" name="expiry" type="datetime-local" required value="{{ listing.expiry.strftime('%Y-%m-%dT%H:%M') if listing and listing.expiry else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring">
+            </div>
+
+            <div class="md:col-span-1">
+                <label for="location" class="mb-1 block text-sm font-semibold">Pickup Location</label>
+                <input id="location" name="location" type="text" required value="{{ listing.location if listing else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="Downtown, City">
+            </div>
+
+            <div class="md:col-span-1 relative">
+                <label for="pickup_address" class="mb-1 block text-sm font-semibold">Pickup Address (Map Search)</label>
+                <input id="pickup_address" name="pickup_address" type="text" required value="{{ listing.pickup_address if listing else '' }}" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="Search full address like Google Maps">
+                <div id="pickupAddressSuggestions" class="address-suggestions hidden"></div>
+            </div>
+
+            <div class="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div class="mb-2 flex items-center justify-between">
+                    <p class="text-sm font-semibold text-slate-800">Pickup Map Pin</p>
+                    <button id="useMyLocation" type="button" class="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Use My Location</button>
+                </div>
+                <p class="mb-3 text-xs text-slate-500">Search address or click on map to pin exact pickup point.</p>
+                <div
+                    id="pickupMap"
+                    class="map-canvas"
+                    data-lat="{{ listing.latitude if listing and listing.latitude is not none else '' }}"
+                    data-lng="{{ listing.longitude if listing and listing.longitude is not none else '' }}"
+                ></div>
+                <p id="pickupMapHint" class="mt-2 text-xs text-slate-500">Tip: Exact pin helps NGO estimate travel distance accurately.</p>
+                <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div>
+                        <label for="latitude" class="mb-1 block text-xs font-semibold text-slate-600">Latitude</label>
+                        <input id="latitude" name="latitude" type="text" readonly value="{{ listing.latitude if listing and listing.latitude is not none else '' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label for="longitude" class="mb-1 block text-xs font-semibold text-slate-600">Longitude</label>
+                        <input id="longitude" name="longitude" type="text" readonly value="{{ listing.longitude if listing and listing.longitude is not none else '' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-1">
+                <label for="category" class="mb-1 block text-sm font-semibold">Food Category</label>
+                <select id="category" name="category" required class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring">
+                    <option value="">Select category</option>
+                    <option value="cooked" {% if listing and listing.category == 'cooked' %}selected{% endif %}>Cooked</option>
+                    <option value="raw" {% if listing and listing.category == 'raw' %}selected{% endif %}>Raw</option>
+                    <option value="packaged" {% if listing and listing.category == 'packaged' %}selected{% endif %}>Packaged</option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2">
+                <label for="description" class="mb-1 block text-sm font-semibold">Description</label>
+                <textarea id="description" name="description" rows="4" required class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="Storage conditions, allergen info, etc.">{{ listing.description if listing else '' }}</textarea>
+            </div>
+
+            <div class="md:col-span-2 flex flex-wrap gap-3">
+                <button type="submit" class="rounded-lg bg-gradient-to-r from-emerald-600 to-lime-500 px-5 py-2 font-semibold text-white shadow-lg shadow-emerald-300/40 hover:from-emerald-700 hover:to-lime-600">
+                    {{ 'Update Listing' if is_edit else 'Add Listing' }}
+                </button>
+                <a href="{{ url_for('donor_dashboard') }}" class="rounded-lg border border-slate-300 px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
