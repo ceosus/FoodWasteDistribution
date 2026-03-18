@@ -160,6 +160,8 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 | Map and Distance | Address search, map pinning, distance guidance |
 | Chatbot Scope | Project-only support behavior |
 | Notifications | Current web limitations for push/email app notifications |
+| Acknowledgement Handling | Context-aware replies for short turns like okay/thanks |
+| Greeting Handling | FWD-specific welcome replies (not generic resets) |
 
 ### Dataset Entries (Current)
 1. Platform Scope: "FWD is currently web-based only..."
@@ -174,6 +176,8 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 10. Map and Distance: "Map pin, address suggestions, distance/ETA guidance"
 11. Chatbot Scope: "FWD-only questions"
 12. Notifications: "No native app push in current web build"
+13. Acknowledgement Handling: "Short acknowledgements return FWD-specific next-help options"
+14. Greeting Handling: "Greetings return FWD workflow-focused support guidance"
 
 ### How "Training" Is Applied Here
 - Current implementation uses grounding (dataset-backed context injection) per question.

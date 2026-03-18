@@ -70,5 +70,17 @@
     "question": "Does FWD send app push or email notifications?",
     "answer": "In the current web build, native app-push notifications are not available. Coordination primarily happens through in-app dashboard updates and messaging.",
     "keywords": ["notification", "email", "push", "alert", "sms"]
+  },
+  {
+    "intent": "Acknowledgement Handling",
+    "question": "What should fwdChat reply for short acknowledgements like okay/thanks?",
+    "answer": "fwdChat should acknowledge briefly and offer FWD-specific next-help options such as account setup, posting food, claiming listings, messaging, pricing, and map distance guidance.",
+    "keywords": ["okay", "ok", "thanks", "acknowledgement", "follow up", "context"]
+  },
+  {
+    "intent": "Greeting Handling",
+    "question": "What should fwdChat reply for greetings?",
+    "answer": "fwdChat should greet users and immediately mention FWD web support areas like registration, login, donor listings, NGO claims, messaging, and maps.",
+    "keywords": ["hello", "hi", "hey", "greeting", "intro"]
   }
 ]

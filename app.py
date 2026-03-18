@@ -30,6 +30,27 @@ CHATBOT_MODEL = "llama-3.1-8b-instant"
 CHATBOT_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 CHATBOT_OFFTOPIC_REPLY = "I can only answer questions about the FWD project."
 CHATBOT_DATASET_PATH = os.path.join(os.path.dirname(__file__), "data", "fwd_chatbot_dataset.json")
+CHATBOT_ACK_WORDS = {
+    "ok",
+    "okay",
+    "k",
+    "cool",
+    "great",
+    "nice",
+    "fine",
+    "good",
+    "thanks",
+    "thank",
+    "thx",
+    "got",
+    "it",
+    "understood",
+    "sure",
+    "yes",
+    "yep",
+    "yup",
+}
+CHATBOT_GREETING_WORDS = {"hi", "hello", "hey", "hola", "namaste"}
 PROJECT_SYSTEM_PROMPT = (
     "You are fwdChat, the assistant for FWD (Food Waste Distribution), used by donors and NGOs. "
     "Be conversational and friendly, and answer user questions about how FWD works from a user perspective. "
@@ -123,6 +144,32 @@ def build_chatbot_context(question: str) -> str:
             f"Answer: {item.get('answer', '')}"
         )
     return "\n".join(context_lines)
+
+
+def quick_chatbot_reply(question: str):
+    normalized = re.sub(r"[^a-z0-9\s]", " ", (question or "").lower())
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    if not normalized:
+        return None
+
+    words = [word for word in normalized.split(" ") if word]
+    if not words:
+        return None
+
+    # Handle short acknowledgement turns so the bot does not reset into generic replies.
+    if len(words) <= 4 and all(word in CHATBOT_ACK_WORDS for word in words):
+        return (
+            "Great. I am here for FWD web support.\n"
+            "Ask about account setup, posting food, NGO claims, pricing, messaging, or map distance."
+        )
+
+    if len(words) <= 4 and all(word in CHATBOT_GREETING_WORDS for word in words):
+        return (
+            "Hello from fwdChat.\n"
+            "I can help with FWD web workflows: register, login, donor listings, NGO claims, messages, and maps."
+        )
+
+    return None
 
 
 def create_indexes() -> None:
@@ -292,6 +339,10 @@ def format_chatbot_answer(answer: str) -> str:
 
 
 def ask_project_chatbot(question: str):
+    quick_reply = quick_chatbot_reply(question)
+    if quick_reply:
+        return quick_reply, True
+
     api_keys = get_chatbot_api_keys()
     if not api_keys:
         return "Chatbot is not configured. Add API keys in .env.", False
