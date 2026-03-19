@@ -18,6 +18,18 @@
     "keywords": ["login", "sign in", "username", "password", "dashboard"]
   },
   {
+    "intent": "Account Settings",
+    "question": "Where can I update my account details?",
+    "answer": "After login, open Settings from the header navigation. Donor and NGO users can edit username, organization name, location, and contact from their Settings page.",
+    "keywords": ["settings", "account", "profile", "edit", "username", "organization", "location", "contact"]
+  },
+  {
+    "intent": "Password and Account Management",
+    "question": "Can I change my password or delete my account in FWD?",
+    "answer": "Yes. In Settings, use Change Password to update your password. The same page also has a Danger Zone with a delete-account option for permanently removing your account.",
+    "keywords": ["change password", "password reset", "delete account", "danger zone", "security", "settings"]
+  },
+  {
     "intent": "Registration Fields",
     "question": "What details are needed during registration?",
     "answer": "FWD registration uses username, password, role, organization name, location, and contact details. It does not require app download steps.",
