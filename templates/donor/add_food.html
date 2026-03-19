@@ -9,6 +9,7 @@
         <p class="mt-2 text-sm text-slate-500">Provide accurate details so NGOs can collect safely and quickly.</p>
 
         <form method="post" action="{{ url_for('donor_edit_food', listing_id=listing._id) if is_edit else url_for('donor_add_food') }}" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="md:col-span-1">
                 <label for="food_name" class="mb-1 block text-sm font-semibold">Food Name</label>
                 <input id="food_name" name="food_name" type="text" required value="{{ listing.food_name if listing else '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring" placeholder="Vegetable Rice">

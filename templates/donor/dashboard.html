@@ -96,6 +96,7 @@
                                         </a>
 
                                         <form method="post" action="{{ url_for('donor_delete_food', listing_id=item._id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button data-confirm="Delete this listing permanently?" class="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" type="submit">
                                                 Delete
                                             </button>
@@ -103,6 +104,7 @@
 
                                         {% if item.status != 'collected' %}
                                             <form method="post" action="{{ url_for('donor_mark_collected', listing_id=item._id) }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                 <button data-confirm="Mark this listing as collected?" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100" type="submit">
                                                     Mark Collected
                                                 </button>

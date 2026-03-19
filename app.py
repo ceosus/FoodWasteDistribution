@@ -7,6 +7,7 @@ from functools import wraps
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask_wtf.csrf import CSRFProtect
 from dotenv import dotenv_values
 from jinja2 import Undefined
 from pymongo import ASCENDING, DESCENDING, MongoClient
@@ -18,6 +19,7 @@ from config import Config
 
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.config.from_object(Config)
 
 mongo_client = MongoClient(app.config["MONGO_URI"])
@@ -64,6 +66,45 @@ PROJECT_SYSTEM_PROMPT = (
     "Keep answers clear, concise, and focused on the user's question. "
     "Use 2-4 short lines, plain text only, and avoid markdown tables or code blocks."
 )
+
+
+def get_chatbot_user_context():
+    role = (session.get("role") or "").strip().lower()
+    username = (session.get("username") or "").strip()
+    is_authenticated = bool(session.get("user_id")) and role in {"donor", "ngo"}
+
+    if not is_authenticated:
+        return {"is_authenticated": False, "role": "guest", "username": "Guest"}
+
+    return {
+        "is_authenticated": True,
+        "role": role,
+        "username": username or "User",
+    }
+
+
+def build_chatbot_user_context_prompt(user_context: dict) -> str:
+    role = user_context.get("role", "guest")
+    username = user_context.get("username", "Guest")
+    is_authenticated = bool(user_context.get("is_authenticated"))
+
+    if not is_authenticated:
+        return (
+            "Current User Context:\n"
+            "- Authenticated: no\n"
+            "- Role: guest\n"
+            "- Guidance: Give general FWD guidance and suggest login/register when role-specific actions are requested.\n"
+            "- Constraint: Never claim the user is logged in, never claim a dashboard is active, and never claim a username is known."
+        )
+
+    return (
+        "Current User Context:\n"
+        f"- Authenticated: yes\n"
+        f"- Username: {username}\n"
+        f"- Role: {role}\n"
+        "- Guidance: Personalize naturally using username and prioritize role-specific actions for this user.\n"
+        "- Constraint: Do not deny login status when Authenticated is yes."
+    )
 
 
 def load_chatbot_dataset():
@@ -146,7 +187,11 @@ def build_chatbot_context(question: str) -> str:
     return "\n".join(context_lines)
 
 
-def quick_chatbot_reply(question: str):
+def quick_chatbot_reply(question: str, user_context: dict | None = None):
+    user_context = user_context or {"is_authenticated": False, "role": "guest", "username": "Guest"}
+    role = user_context.get("role", "guest")
+    username = user_context.get("username", "Guest")
+
     normalized = re.sub(r"[^a-z0-9\s]", " ", (question or "").lower())
     normalized = re.sub(r"\s+", " ", normalized).strip()
     if not normalized:
@@ -156,14 +201,63 @@ def quick_chatbot_reply(question: str):
     if not words:
         return None
 
+    # Handle direct session-status checks deterministically from Flask session context.
+    login_status_phrases = {
+        "am i logged in",
+        "i am logged in",
+        "im logged in",
+        "logged in",
+        "login status",
+        "am i login",
+        "who am i",
+        "what is my role",
+        "my role",
+        "my username",
+    }
+    if normalized in login_status_phrases:
+        if role == "donor":
+            return (
+                f"Yes, {username}. You are logged in as a donor.\n"
+                "You can manage listings, messages, settings, and pickup status from the donor dashboard."
+            )
+        if role == "ngo":
+            return (
+                f"Yes, {username}. You are logged in as an NGO.\n"
+                "You can claim food, message donors, open settings, and update received status."
+            )
+        return (
+            "You are not logged in right now.\n"
+            "Please use Login, then I can give donor/NGO-specific guidance with your account context."
+        )
+
     # Handle short acknowledgement turns so the bot does not reset into generic replies.
     if len(words) <= 4 and all(word in CHATBOT_ACK_WORDS for word in words):
+        if role == "donor":
+            return (
+                f"Great, {username}. I can help with donor tasks.\n"
+                "Ask about adding listings, improving claim speed, pricing, messaging, or collected status updates."
+            )
+        if role == "ngo":
+            return (
+                f"Great, {username}. I can help with NGO tasks.\n"
+                "Ask about filters, claim decisions, donor coordination, map distance, or marking received."
+            )
         return (
             "Great. I am here for FWD web support.\n"
             "Ask about account setup, posting food, NGO claims, pricing, messaging, or map distance."
         )
 
     if len(words) <= 4 and all(word in CHATBOT_GREETING_WORDS for word in words):
+        if role == "donor":
+            return (
+                f"Hello {username}. You are logged in as a donor.\n"
+                "I can help with listings, claim coordination, pricing, messages, and dashboard actions."
+            )
+        if role == "ngo":
+            return (
+                f"Hello {username}. You are logged in as an NGO.\n"
+                "I can help with claiming food, distance checks, donor messaging, received status, and settings."
+            )
         return (
             "Hello from fwdChat.\n"
             "I can help with FWD web workflows: register, login, donor listings, NGO claims, messages, and maps."
@@ -312,6 +406,9 @@ def get_chatbot_api_keys():
     return deduped
 
 
+CHATBOT_API_KEYS = get_chatbot_api_keys()
+
+
 def format_chatbot_answer(answer: str) -> str:
     if not answer:
         return "I can only answer questions about the FWD project."
@@ -338,12 +435,14 @@ def format_chatbot_answer(answer: str) -> str:
     return "\n".join(cleaned_lines[:4])
 
 
-def ask_project_chatbot(question: str):
-    quick_reply = quick_chatbot_reply(question)
+def ask_project_chatbot(question: str, user_context: dict | None = None):
+    user_context = user_context or get_chatbot_user_context()
+
+    quick_reply = quick_chatbot_reply(question, user_context=user_context)
     if quick_reply:
         return quick_reply, True
 
-    api_keys = get_chatbot_api_keys()
+    api_keys = CHATBOT_API_KEYS
     if not api_keys:
         return "Chatbot is not configured. Add API keys in .env.", False
 
@@ -353,6 +452,7 @@ def ask_project_chatbot(question: str):
         "max_tokens": 350,
         "messages": [
             {"role": "system", "content": PROJECT_SYSTEM_PROMPT},
+            {"role": "system", "content": build_chatbot_user_context_prompt(user_context)},
             {"role": "system", "content": build_chatbot_context(question)},
             {"role": "user", "content": question},
         ],
@@ -533,6 +633,7 @@ def login():
         session["user_id"] = str(user["_id"])
         session["role"] = user["role"]
         session["username"] = user["username"]
+        session.permanent = True
 
         flash("Login successful.", "success")
         if user["role"] == "donor":
@@ -819,6 +920,93 @@ def donor_mark_collected(listing_id):
     return redirect(url_for("donor_dashboard"))
 
 
+@app.route("/donor/settings", methods=["GET", "POST"])
+@login_required
+@role_required("donor")
+def donor_settings():
+    current_user = get_current_user()
+    if not current_user:
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        action = request.form.get("action", "").strip()
+
+        if action == "update":
+            username = request.form.get("username", "").strip().lower()
+            organization_name = request.form.get("organization_name", "").strip()
+            location = request.form.get("location", "").strip()
+            contact = request.form.get("contact", "").strip()
+
+            if not all([username, organization_name, location, contact]):
+                flash("All fields are required.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            # Check if new username is already taken (if changed)
+            if username != current_user.get("username"):
+                existing = users_col.find_one({"username": username})
+                if existing:
+                    flash("Username already taken. Please choose another.", "error")
+                    return render_template("donor/settings.html", current_user=current_user)
+
+            users_col.update_one(
+                {"_id": current_user["_id"]},
+                {
+                    "$set": {
+                        "username": username,
+                        "organization_name": organization_name,
+                        "location": location,
+                        "contact": contact,
+                    }
+                },
+            )
+            session["username"] = username
+            flash("Profile updated successfully.", "success")
+            current_user = get_current_user()
+            return render_template("donor/settings.html", current_user=current_user)
+
+        elif action == "change_password":
+            current_password = request.form.get("current_password", "")
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            if not current_password or not new_password or not confirm_password:
+                flash("All password fields are required.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            if not check_password_hash(current_user.get("password", ""), current_password):
+                flash("Current password is incorrect.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            if new_password != confirm_password:
+                flash("New passwords do not match.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            if len(new_password) < 6:
+                flash("New password must be at least 6 characters.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            users_col.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"password": generate_password_hash(new_password)}},
+            )
+            flash("Password changed successfully.", "success")
+            current_user = get_current_user()
+            return render_template("donor/settings.html", current_user=current_user)
+
+        elif action == "delete":
+            # Delete user's account and all related data
+            users_col.delete_one({"_id": current_user["_id"]})
+            food_col.delete_many({"donor_id": current_user["_id"]})
+            messages_col.delete_many({"sender_id": current_user["_id"]})
+            messages_col.delete_many({"recipient_id": current_user["_id"]})
+            session.clear()
+            flash("Your account has been deleted.", "success")
+            return redirect(url_for("home"))
+
+    return render_template("donor/settings.html", current_user=current_user)
+
+
 @app.get("/ngo/dashboard")
 @login_required
 @role_required("ngo")
@@ -982,6 +1170,103 @@ def ngo_mark_received(listing_id):
         flash("Unable to mark listing as received.", "error")
 
     return redirect(url_for("ngo_claim_food"))
+
+
+@app.route("/ngo/settings", methods=["GET", "POST"])
+@login_required
+@role_required("ngo")
+def ngo_settings():
+    current_user = get_current_user()
+    if not current_user:
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        action = request.form.get("action", "").strip()
+
+        if action == "update":
+            username = request.form.get("username", "").strip().lower()
+            organization_name = request.form.get("organization_name", "").strip()
+            location = request.form.get("location", "").strip()
+            contact = request.form.get("contact", "").strip()
+
+            if not all([username, organization_name, location, contact]):
+                flash("All fields are required.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            # Check if new username is already taken (if changed)
+            if username != current_user.get("username"):
+                existing = users_col.find_one({"username": username})
+                if existing:
+                    flash("Username already taken. Please choose another.", "error")
+                    return render_template("ngo/settings.html", current_user=current_user)
+
+            users_col.update_one(
+                {"_id": current_user["_id"]},
+                {
+                    "$set": {
+                        "username": username,
+                        "organization_name": organization_name,
+                        "location": location,
+                        "contact": contact,
+                    }
+                },
+            )
+            session["username"] = username
+            flash("Profile updated successfully.", "success")
+            current_user = get_current_user()
+            return render_template("ngo/settings.html", current_user=current_user)
+
+        elif action == "change_password":
+            current_password = request.form.get("current_password", "")
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            if not current_password or not new_password or not confirm_password:
+                flash("All password fields are required.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            if not check_password_hash(current_user.get("password", ""), current_password):
+                flash("Current password is incorrect.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            if new_password != confirm_password:
+                flash("New passwords do not match.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            if len(new_password) < 6:
+                flash("New password must be at least 6 characters.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            users_col.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"password": generate_password_hash(new_password)}},
+            )
+            flash("Password changed successfully.", "success")
+            current_user = get_current_user()
+            return render_template("ngo/settings.html", current_user=current_user)
+
+        elif action == "delete":
+            ngo_id = current_user["_id"]
+            # Unclaim active NGO claims before deleting account.
+            food_col.update_many(
+                {"claimed_by": ngo_id, "status": "claimed"},
+                {
+                    "$set": {
+                        "status": "available",
+                        "claimed_by": None,
+                        "claimed_at": None,
+                    }
+                },
+            )
+            users_col.delete_one({"_id": current_user["_id"]})
+            messages_col.delete_many({"sender_id": current_user["_id"]})
+            messages_col.delete_many({"recipient_id": current_user["_id"]})
+            session.clear()
+            flash("Your account has been deleted.", "success")
+            return redirect(url_for("home"))
+
+    return render_template("ngo/settings.html", current_user=current_user)
 
 
 @app.route("/messages", methods=["GET", "POST"])
@@ -1165,7 +1450,8 @@ def chatbot_page():
             flash("Question is too long. Keep it under 1000 characters.", "error")
             return redirect(url_for("chatbot_page"))
 
-        answer, success = ask_project_chatbot(question)
+        user_context = get_chatbot_user_context()
+        answer, success = ask_project_chatbot(question, user_context=user_context)
         if not success:
             flash("Chatbot API issue detected. Auto-rotation attempted all keys.", "error")
 
@@ -1187,9 +1473,10 @@ def chatbot_api():
     if len(question) > 1000:
         return jsonify({"ok": False, "answer": "Question is too long. Keep it under 1000 characters."}), 400
 
-    answer, success = ask_project_chatbot(question)
+    user_context = get_chatbot_user_context()
+    answer, success = ask_project_chatbot(question, user_context=user_context)
     return jsonify({"ok": success, "answer": answer})
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

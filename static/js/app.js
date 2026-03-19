@@ -22,6 +22,8 @@ const fwdChatPanel = document.getElementById('fwdChatPanel');
 const fwdChatForm = document.getElementById('fwdChatForm');
 const fwdChatInput = document.getElementById('fwdChatInput');
 const fwdChatMessages = document.getElementById('fwdChatMessages');
+const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
 
 function appendBubble(text, role) {
     if (!fwdChatMessages) {
@@ -44,13 +46,18 @@ async function askFwdChat(question) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify({ question }),
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         if (loadingBubble) {
             loadingBubble.remove();
+        }
+        if (!response.ok) {
+            appendBubble(data.answer || 'Unable to respond right now.', 'bot');
+            return;
         }
         appendBubble(data.answer || 'Unable to respond right now.', 'bot');
     } catch (error) {

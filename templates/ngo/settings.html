@@ -26,6 +26,7 @@
                 </div>
 
                 <form method="post" class="space-y-5">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div>
                         <label for="username" class="mb-1 block text-sm font-semibold text-slate-700">Username</label>
                         <input
@@ -94,6 +95,7 @@
                 </div>
 
                 <form method="post" class="space-y-5">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div>
                         <label for="current_password" class="mb-1 block text-sm font-semibold text-slate-700">Current Password</label>
                         <input
@@ -154,6 +156,7 @@
                 <h2 class="mb-3 text-lg font-bold text-red-900">Danger Zone</h2>
                 <p class="mb-4 text-sm text-red-700">Once you delete your account, there is no going back. Please be certain.</p>
                 <form method="post" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button
                         type="submit"
                         name="action"

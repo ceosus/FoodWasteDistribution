@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}FWD | Food Waste Distribution{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,6 +32,7 @@
                 {% if is_authenticated and current_role == 'donor' %}
                     <a class="nav-link nav-link-donor" href="{{ url_for('donor_dashboard') }}">Dashboard</a>
                     <a class="nav-link nav-link-donor" href="{{ url_for('donor_add_food') }}">Add Food</a>
+                    <a class="nav-link nav-link-donor" href="{{ url_for('donor_settings') }}">Settings</a>
                     <a class="nav-link nav-link-donor" href="{{ url_for('messages_page') }}">
                         Messages{% if unread_messages %} ({{ unread_messages }}){% endif %}
                     </a>
@@ -38,6 +40,7 @@
                 {% elif is_authenticated and current_role == 'ngo' %}
                     <a class="nav-link nav-link-ngo" href="{{ url_for('ngo_dashboard') }}">Dashboard</a>
                     <a class="nav-link nav-link-ngo" href="{{ url_for('ngo_claim_food') }}">Claim Food</a>
+                    <a class="nav-link nav-link-ngo" href="{{ url_for('ngo_settings') }}">Settings</a>
                     <a class="nav-link nav-link-ngo" href="{{ url_for('messages_page') }}">
                         Messages{% if unread_messages %} ({{ unread_messages }}){% endif %}
                     </a>
@@ -52,6 +55,7 @@
                         {{ current_username }} ({{ current_role|upper }})
                     </span>
                     <form action="{{ url_for('logout') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button class="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700" type="submit">
                             Logout
                         </button>

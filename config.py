@@ -8,6 +8,14 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
+    WTF_CSRF_ENABLED = True
+    SESSION_COOKIE_SECURE = os.getenv(
+        "SESSION_COOKIE_SECURE",
+        "true" if os.getenv("VERCEL") else "false",
+    ).lower() == "true"
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    PERMANENT_SESSION_LIFETIME = 3600
 
     # Support either a full MONGO_URI or split Atlas/local Mongo variables.
     _mongo_uri = os.getenv("MONGO_URI")

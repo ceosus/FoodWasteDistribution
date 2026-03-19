@@ -58,6 +58,7 @@
             </div>
 
             <form method="post" class="border-t border-slate-200 p-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-[1fr,220px]">
                     <input type="hidden" name="recipient_id" value="{{ selected_recipient_id or to_prefill }}">
                     <textarea name="message" rows="3" maxlength="1000" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 transition focus:border-blue-500 focus:ring" placeholder="Type your message..."></textarea>
