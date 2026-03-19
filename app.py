@@ -1463,6 +1463,7 @@ def chatbot_page():
 
 
 @app.post("/api/chatbot")
+@csrf.exempt
 def chatbot_api():
     payload = request.get_json(silent=True) or {}
     question = (payload.get("question") or "").strip()
