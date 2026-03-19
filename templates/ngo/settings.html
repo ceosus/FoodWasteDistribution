@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}NGO Settings | FWD{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-5xl">
+    <div class="rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-600 to-cyan-500 p-7 text-white shadow-lg shadow-blue-300/40">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Account Settings</h1>
+                <p class="mt-2 text-sm text-blue-50">Manage your profile, update credentials, and account preferences.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                <span class="rounded-full bg-white/20 px-3 py-1">NGO Profile</span>
+                <span class="rounded-full bg-white/20 px-3 py-1">Secure Access</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
+        <div class="space-y-6">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-900">Edit Profile</h2>
+                    <p class="mt-1 text-sm text-slate-500">Keep your NGO details updated for better donor coordination.</p>
+                </div>
+
+                <form method="post" class="space-y-5">
+                    <div>
+                        <label for="username" class="mb-1 block text-sm font-semibold text-slate-700">Username</label>
+                        <input
+                            id="username"
+                            name="username"
+                            type="text"
+                            required
+                            value="{{ current_user.username }}"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                            placeholder="your_username">
+                        <p class="mt-1 text-xs text-slate-500">Your unique login username</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="organization_name" class="mb-1 block text-sm font-semibold text-slate-700">NGO Name</label>
+                            <input
+                                id="organization_name"
+                                name="organization_name"
+                                type="text"
+                                required
+                                value="{{ current_user.organization_name }}"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                                placeholder="NGO organization name">
+                        </div>
+
+                        <div>
+                            <label for="location" class="mb-1 block text-sm font-semibold text-slate-700">Location</label>
+                            <input
+                                id="location"
+                                name="location"
+                                type="text"
+                                required
+                                value="{{ current_user.location }}"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                                placeholder="City / Area">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="contact" class="mb-1 block text-sm font-semibold text-slate-700">Contact</label>
+                        <input
+                            id="contact"
+                            name="contact"
+                            type="text"
+                            required
+                            value="{{ current_user.contact }}"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                            placeholder="Phone number">
+                    </div>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="update"
+                        class="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2 font-semibold text-white shadow-lg shadow-blue-300/40 hover:from-blue-700 hover:to-cyan-600">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-900">Change Password</h2>
+                    <p class="mt-1 text-sm text-slate-500">Use a strong password to protect your NGO account.</p>
+                </div>
+
+                <form method="post" class="space-y-5">
+                    <div>
+                        <label for="current_password" class="mb-1 block text-sm font-semibold text-slate-700">Current Password</label>
+                        <input
+                            id="current_password"
+                            name="current_password"
+                            type="password"
+                            required
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                            placeholder="Enter your current password">
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="new_password" class="mb-1 block text-sm font-semibold text-slate-700">New Password</label>
+                            <input
+                                id="new_password"
+                                name="new_password"
+                                type="password"
+                                required
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                                placeholder="Enter new password">
+                            <p class="mt-1 text-xs text-slate-500">Minimum 6 characters recommended</p>
+                        </div>
+
+                        <div>
+                            <label for="confirm_password" class="mb-1 block text-sm font-semibold text-slate-700">Confirm New Password</label>
+                            <input
+                                id="confirm_password"
+                                name="confirm_password"
+                                type="password"
+                                required
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring"
+                                placeholder="Confirm new password">
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="change_password"
+                        class="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2 font-semibold text-white shadow-lg shadow-blue-300/40 hover:from-blue-700 hover:to-cyan-600">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <aside class="space-y-6">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="mb-2 text-base font-bold text-slate-900">Need to go back?</h2>
+                <p class="mb-4 text-sm text-slate-600">Return to your dashboard to continue managing claims and updates.</p>
+                <a href="{{ url_for('ngo_dashboard') }}" class="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+                    Back to Dashboard
+                </a>
+            </div>
+
+            <div class="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
+                <h2 class="mb-3 text-lg font-bold text-red-900">Danger Zone</h2>
+                <p class="mb-4 text-sm text-red-700">Once you delete your account, there is no going back. Please be certain.</p>
+                <form method="post" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.');">
+                    <button
+                        type="submit"
+                        name="action"
+                        value="delete"
+                        class="w-full rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700">
+                        Delete Account
+                    </button>
+                </form>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
