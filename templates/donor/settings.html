@@ -73,9 +73,14 @@
                             name="contact"
                             type="text"
                             required
+                            inputmode="numeric"
+                            pattern="[0-9]{10}"
+                            minlength="10"
+                            maxlength="10"
+                            title="Enter exactly 10 digits"
                             value="{{ current_user.contact }}"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-emerald-200 transition focus:border-emerald-500 focus:ring"
-                            placeholder="Phone number">
+                            placeholder="10-digit phone number">
                     </div>
 
                     <button

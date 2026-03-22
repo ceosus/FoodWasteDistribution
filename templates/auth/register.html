@@ -38,7 +38,7 @@
             </div>
             <div class="md:col-span-1">
                 <label for="contact" class="mb-1 block text-sm font-semibold">Contact</label>
-                <input id="contact" name="contact" type="text" required class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring" placeholder="Phone number">
+                <input id="contact" name="contact" type="text" required inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" title="Enter exactly 10 digits" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring" placeholder="10-digit phone number">
             </div>
 
             <div class="md:col-span-2">
