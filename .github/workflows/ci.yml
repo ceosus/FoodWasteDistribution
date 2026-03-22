@@ -62,62 +62,62 @@ jobs:
           ]
 
           metadata = {
-            "tests/acceptance/test_user_journeys.py::test_guest_is_redirected_from_protected_dashboard": (
+            "tests.acceptance.test_user_journeys::test_guest_is_redirected_from_protected_dashboard": (
               "Protected Route",
               "Guest accesses donor dashboard",
               "Redirect to login page",
             ),
-            "tests/acceptance/test_user_journeys.py::test_donor_user_story_register_login_and_reach_dashboard": (
+            "tests.acceptance.test_user_journeys::test_donor_user_story_register_login_and_reach_dashboard": (
               "User Login",
               "Valid donor credentials",
               "Login success and donor dashboard access",
             ),
-            "tests/acceptance/test_user_journeys.py::test_ngo_cannot_access_donor_dashboard": (
+            "tests.acceptance.test_user_journeys::test_ngo_cannot_access_donor_dashboard": (
               "Role Authorization",
               "NGO accesses donor dashboard",
               "Access denied and redirect",
             ),
-            "tests/integration/test_auth_flow.py::test_register_login_logout_flow": (
+            "tests.integration.test_auth_flow::test_register_login_logout_flow": (
               "User Login",
               "Register + valid credentials + logout",
               "Auth flow works with secure session handling",
             ),
-            "tests/system/test_listing_lifecycle.py::test_full_listing_lifecycle_from_donor_to_ngo": (
+            "tests.system.test_listing_lifecycle::test_full_listing_lifecycle_from_donor_to_ngo": (
               "Request Food",
               "Valid donor listing and NGO claim sequence",
               "Listing progresses available -> claimed -> collected",
             ),
-            "tests/unit/test_helpers.py::test_parse_expiry_valid_value": (
+            "tests.unit.test_helpers::test_parse_expiry_valid_value": (
               "Add Food",
               "Valid expiry datetime string",
               "Expiry parsed as UTC datetime",
             ),
-            "tests/unit/test_helpers.py::test_parse_expiry_invalid_value": (
+            "tests.unit.test_helpers::test_parse_expiry_invalid_value": (
               "Add Food",
               "Invalid expiry datetime string",
               "Validation error (None)",
             ),
-            "tests/unit/test_helpers.py::test_parse_donation_price_rules": (
+            "tests.unit.test_helpers::test_parse_donation_price_rules": (
               "Add Food",
               "Donation prices: valid, zero, negative, non-numeric",
               "Only valid positive price accepted",
             ),
-            "tests/unit/test_helpers.py::test_parse_coordinates_requires_both_values": (
+            "tests.unit.test_helpers::test_parse_coordinates_requires_both_values": (
               "Add Food",
               "Missing latitude or longitude",
               "Validation error for missing coordinates",
             ),
-            "tests/unit/test_helpers.py::test_parse_coordinates_success_and_rounding": (
+            "tests.unit.test_helpers::test_parse_coordinates_success_and_rounding": (
               "Add Food",
               "Valid latitude and longitude",
               "Coordinates accepted and rounded",
             ),
-            "tests/unit/test_helpers.py::test_quick_chatbot_reply_for_guest_login_status": (
+            "tests.unit.test_helpers::test_quick_chatbot_reply_for_guest_login_status": (
               "Chatbot",
               "Guest asks login status",
               "Guest-friendly login guidance shown",
             ),
-            "tests/unit/test_helpers.py::test_format_chatbot_answer_limits_lines": (
+            "tests.unit.test_helpers::test_format_chatbot_answer_limits_lines": (
               "Chatbot",
               "Answer with more than 4 lines",
               "Output truncated to 4 lines",
@@ -137,6 +137,7 @@ jobs:
               classname = testcase.attrib.get("classname", "")
               name = testcase.attrib.get("name", "")
               nodeid = f"{classname}::{name}" if classname else name
+              nodeid_path_style = f"{classname.replace('.', '/')}.py::{name}" if classname else name
 
               failed = testcase.find("failure") is not None or testcase.find("error") is not None
               skipped = testcase.find("skipped") is not None
@@ -148,8 +149,8 @@ jobs:
                 result = "Passed"
                 passed += 1
 
-              test_case, test_input, expected = metadata.get(
-                nodeid,
+              test_case, test_input, expected = metadata.get(nodeid) or metadata.get(
+                nodeid_path_style,
                 ("General Test", nodeid, "Behavior is validated as expected"),
               )
               rows.append((test_case, test_input, expected, result))
@@ -164,6 +165,6 @@ jobs:
             summary.write("|---|---|---|---|\n")
             for row in rows:
               escaped = [str(col).replace("|", "\\|") for col in row]
-              summary.write(f"| {escaped[0]} | {escaped[1]} | {escaped[2]} | {escaped[3]} |\\n")
-            summary.write(f"\\n**Summary:** {passed}/{total} tests passed.\\n")
+              summary.write(f"| {escaped[0]} | {escaped[1]} | {escaped[2]} | {escaped[3]} |\n")
+            summary.write(f"\n**Summary:** {passed}/{total} tests passed.\n")
           PY
