@@ -226,3 +226,21 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 - Add pagination and richer analytics
 - Add SMS or WhatsApp notifications for claims
 - Add expiry alerts and scheduled cleanup jobs
+
+## Maintenance / Coming Soon Mode
+You can temporarily show a "Coming Soon" page for the deployed site while backend updates are in progress.
+
+Set this environment variable in deployment:
+```env
+MAINTENANCE_MODE=true
+```
+
+When enabled:
+- Most routes return the maintenance page.
+- Static assets and legal/contact pages stay reachable.
+- You can also open `/coming-soon` directly.
+
+To restore normal site behavior, set:
+```env
+MAINTENANCE_MODE=false
+```
