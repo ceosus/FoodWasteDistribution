@@ -24,7 +24,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-test.txt
 
-      - name: Run tests
+      - name: Run unit tests
         env:
           MONGO_SERVER_SELECTION_TIMEOUT_MS: "100"
-        run: python -m pytest
+        run: python -m pytest tests/unit -vv -ra
+
+      - name: Run integration tests
+        env:
+          MONGO_SERVER_SELECTION_TIMEOUT_MS: "100"
+        run: python -m pytest tests/integration -vv -ra
+
+      - name: Run system tests
+        env:
+          MONGO_SERVER_SELECTION_TIMEOUT_MS: "100"
+        run: python -m pytest tests/system -vv -ra
+
+      - name: Run acceptance tests
+        env:
+          MONGO_SERVER_SELECTION_TIMEOUT_MS: "100"
+        run: python -m pytest tests/acceptance -vv -ra
