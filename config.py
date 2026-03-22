@@ -36,3 +36,6 @@ class Config:
         )
     else:
         MONGO_URI = "mongodb://localhost:27017"
+
+    if os.getenv("VERCEL") and SECRET_KEY == "change-me-in-production":
+        raise RuntimeError("SECRET_KEY must be set in production.")

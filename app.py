@@ -1,6 +1,7 @@
 import os
 import re
 import json
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -56,6 +57,9 @@ CHATBOT_ACK_WORDS = {
     "yup",
 }
 CHATBOT_GREETING_WORDS = {"hi", "hello", "hey", "hola", "namaste"}
+CHATBOT_RATE_WINDOW_SECONDS = int(os.getenv("CHATBOT_RATE_WINDOW_SECONDS", "60"))
+CHATBOT_RATE_LIMIT_PER_WINDOW = int(os.getenv("CHATBOT_RATE_LIMIT_PER_WINDOW", "15"))
+CHATBOT_RATE_BUCKETS = defaultdict(deque)
 PROJECT_SYSTEM_PROMPT = (
     "You are fwdChat, the assistant for FWD (Food Waste Distribution), used by donors and NGOs. "
     "Be conversational and friendly, and answer user questions about how FWD works from a user perspective. "
@@ -287,6 +291,21 @@ def quick_chatbot_reply(question: str, user_context: dict | None = None):
         )
 
     return None
+
+
+def _chatbot_is_rate_limited(client_key: str) -> bool:
+    now_ts = datetime.now(timezone.utc).timestamp()
+    window_start = now_ts - CHATBOT_RATE_WINDOW_SECONDS
+    bucket = CHATBOT_RATE_BUCKETS[client_key]
+
+    while bucket and bucket[0] < window_start:
+        bucket.popleft()
+
+    if len(bucket) >= CHATBOT_RATE_LIMIT_PER_WINDOW:
+        return True
+
+    bucket.append(now_ts)
+    return False
 
 
 def create_indexes() -> None:
@@ -1514,6 +1533,10 @@ def chatbot_page():
 @app.post("/api/chatbot")
 @csrf.exempt
 def chatbot_api():
+    identity_key = session.get("user_id") or request.headers.get("X-Forwarded-For") or request.remote_addr or "guest"
+    if _chatbot_is_rate_limited(str(identity_key)):
+        return jsonify({"ok": False, "answer": "Too many requests. Please wait a moment and try again."}), 429
+
     payload = request.get_json(silent=True) or {}
     question = (payload.get("question") or "").strip()
 
