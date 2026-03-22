@@ -57,6 +57,26 @@ def test_quick_chatbot_reply_for_guest_login_status():
     assert "not logged in" in reply.lower()
 
 
+def test_quick_chatbot_reply_for_guest_password_reset():
+    reply = app_module.quick_chatbot_reply(
+        "I forgot password",
+        user_context={"is_authenticated": False, "role": "guest", "username": "Guest"},
+    )
+
+    assert "contact" in reply.lower()
+    assert "admin" in reply.lower()
+
+
+def test_quick_chatbot_reply_for_logged_in_password_reset():
+    reply = app_module.quick_chatbot_reply(
+        "reset password",
+        user_context={"is_authenticated": True, "role": "donor", "username": "alex"},
+    )
+
+    assert "settings" in reply.lower()
+    assert "change password" in reply.lower()
+
+
 def test_format_chatbot_answer_limits_lines():
     result = app_module.format_chatbot_answer("1. One\n2. Two\n3. Three\n4. Four\n5. Five")
 
