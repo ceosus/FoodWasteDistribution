@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Coming Soon | FWD{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-4xl">
+    <div class="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 p-8 shadow-lg md:p-12">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">Maintenance Mode</p>
+        <h1 class="mt-3 text-3xl font-bold text-slate-900 md:text-5xl">We are improving FWD right now.</h1>
+        <p class="mt-4 text-sm text-slate-700 md:text-base">
+            The platform is temporarily in maintenance while backend updates are being completed.
+            Please check back shortly.
+        </p>
+
+        <div class="mt-6 grid gap-3 md:grid-cols-3">
+            <article class="rounded-xl border border-white/70 bg-white/80 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">Backend updates in progress</p>
+            </article>
+            <article class="rounded-xl border border-white/70 bg-white/80 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Availability</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">Temporarily limited</p>
+            </article>
+            <article class="rounded-xl border border-white/70 bg-white/80 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Action</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">Please try again soon</p>
+            </article>
+        </div>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+            <a href="{{ url_for('contact_page') }}" class="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-700">
+                Contact Admin
+            </a>
+            <a href="{{ url_for('home') }}" class="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Refresh Page
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
