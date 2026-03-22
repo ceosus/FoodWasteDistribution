@@ -117,6 +117,16 @@ jobs:
               "Guest asks login status",
               "Guest-friendly login guidance shown",
             ),
+            "tests.unit.test_helpers::test_quick_chatbot_reply_for_guest_password_reset": (
+              "Chatbot",
+              "Guest asks forgot/reset password",
+              "Direct user to contact admin from Contact page",
+            ),
+            "tests.unit.test_helpers::test_quick_chatbot_reply_for_logged_in_password_reset": (
+              "Chatbot",
+              "Logged-in user asks password reset",
+              "Direct user to Settings Change Password",
+            ),
             "tests.unit.test_helpers::test_format_chatbot_answer_limits_lines": (
               "Chatbot",
               "Answer with more than 4 lines",
