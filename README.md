@@ -135,6 +135,43 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - NGO -> `/ngo/dashboard`
 - Authenticated users -> `/chatbot` for project-restricted Q&A
 
+## Testing
+The project now includes test coverage at four levels using `pytest` and an in-memory Mongo mock.
+
+### Install Test Dependencies
+```bash
+pip install -r requirements-test.txt
+```
+
+### Run Unit Tests
+Validates pure functions and small isolated logic.
+```bash
+pytest tests/unit
+```
+
+### Run Integration Tests
+Validates module interactions such as auth flow and session behavior.
+```bash
+pytest tests/integration
+```
+
+### Run System Tests
+Validates full workflow across major modules (donor listing -> NGO claim -> received).
+```bash
+pytest tests/system
+```
+
+### Run Acceptance Tests
+Validates user-story behavior from an end-user point of view.
+```bash
+pytest tests/acceptance
+```
+
+### Run Complete Test Suite
+```bash
+pytest
+```
+
 ## Security Notes
 - Passwords are hashed using Werkzeug.
 - Sessions use Flask secret key.
