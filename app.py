@@ -23,6 +23,26 @@ app = Flask(__name__)
 csrf = CSRFProtect(app)
 app.config.from_object(Config)
 
+
+@app.before_request
+def maintenance_gate():
+    if not app.config.get("MAINTENANCE_MODE", False):
+        return None
+
+    endpoint = request.endpoint or ""
+    allowed_endpoints = {
+        "static",
+        "coming_soon",
+        "contact_page",
+        "privacy_policy",
+        "terms_of_use",
+    }
+
+    if endpoint in allowed_endpoints:
+        return None
+
+    return render_template("maintenance.html"), 503
+
 mongo_client = MongoClient(
     app.config["MONGO_URI"],
     serverSelectionTimeoutMS=int(os.getenv("MONGO_SERVER_SELECTION_TIMEOUT_MS", "5000")),
@@ -612,6 +632,11 @@ def home():
         role_route = url_for("ngo_dashboard")
 
     return render_template("home.html", stats=stats, role_route=role_route)
+
+
+@app.get("/coming-soon")
+def coming_soon():
+    return render_template("maintenance.html")
 
 
 @app.get("/privacy-policy")
