@@ -26,8 +26,8 @@
   {
     "intent": "Password and Account Management",
     "question": "Can I change my password or delete my account in FWD?",
-    "answer": "Yes. In Settings, use Change Password to update your password. The same page also has a Danger Zone with a delete-account option for permanently removing your account.",
-    "keywords": ["change password", "password reset", "delete account", "danger zone", "security", "settings"]
+    "answer": "Logged-in users can open Settings and use Change Password to reset the password. If you are not logged in, contact the admin team from the Contact page for reset help. The same Settings page also has a Danger Zone with a delete-account option.",
+    "keywords": ["change password", "password reset", "forgot password", "delete account", "danger zone", "security", "settings", "contact admin"]
   },
   {
     "intent": "Registration Fields",

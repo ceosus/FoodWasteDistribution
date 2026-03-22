@@ -204,6 +204,26 @@ def quick_chatbot_reply(question: str, user_context: dict | None = None):
     if not words:
         return None
 
+    password_reset_terms = {
+        "forgot password",
+        "reset password",
+        "password reset",
+        "forgot my password",
+        "recover password",
+        "change password",
+    }
+    asks_password_reset = any(term in normalized for term in password_reset_terms)
+    if asks_password_reset:
+        if role in {"donor", "ngo"}:
+            return (
+                f"You are logged in, {username}.\n"
+                "Open Settings and use Change Password to reset your password."
+            )
+        return (
+            "Password reset is available for logged-in users in Settings.\n"
+            "If you are not logged in, please contact the admin team from the Contact page for reset support."
+        )
+
     # Handle direct session-status checks deterministically from Flask session context.
     login_status_phrases = {
         "am i logged in",
