@@ -354,6 +354,13 @@ def parse_donation_price(price_input: str):
     return round(price, 2)
 
 
+def parse_contact_number(contact_input: str):
+    contact = (contact_input or "").strip()
+    if not re.fullmatch(r"[0-9]{10}", contact):
+        return None
+    return contact
+
+
 def parse_coordinates(latitude_raw: str, longitude_raw: str):
     lat_raw = (latitude_raw or "").strip()
     lng_raw = (longitude_raw or "").strip()
@@ -592,9 +599,14 @@ def register():
         organization_name = request.form.get("organization_name", "").strip()
         location = request.form.get("location", "").strip()
         contact = request.form.get("contact", "").strip()
+        valid_contact = parse_contact_number(contact)
 
         if not all([username, password, role, organization_name, location, contact]):
             flash("All fields are required.", "error")
+            return render_template("auth/register.html")
+
+        if not valid_contact:
+            flash("Contact must be exactly 10 digits.", "error")
             return render_template("auth/register.html")
 
         if role not in {"donor", "ngo"}:
@@ -607,7 +619,7 @@ def register():
             "role": role,
             "organization_name": organization_name,
             "location": location,
-            "contact": contact,
+            "contact": valid_contact,
             "created_at": utcnow(),
         }
 
@@ -944,9 +956,14 @@ def donor_settings():
             organization_name = request.form.get("organization_name", "").strip()
             location = request.form.get("location", "").strip()
             contact = request.form.get("contact", "").strip()
+            valid_contact = parse_contact_number(contact)
 
             if not all([username, organization_name, location, contact]):
                 flash("All fields are required.", "error")
+                return render_template("donor/settings.html", current_user=current_user)
+
+            if not valid_contact:
+                flash("Contact must be exactly 10 digits.", "error")
                 return render_template("donor/settings.html", current_user=current_user)
 
             # Check if new username is already taken (if changed)
@@ -963,7 +980,7 @@ def donor_settings():
                         "username": username,
                         "organization_name": organization_name,
                         "location": location,
-                        "contact": contact,
+                        "contact": valid_contact,
                     }
                 },
             )
@@ -1196,9 +1213,14 @@ def ngo_settings():
             organization_name = request.form.get("organization_name", "").strip()
             location = request.form.get("location", "").strip()
             contact = request.form.get("contact", "").strip()
+            valid_contact = parse_contact_number(contact)
 
             if not all([username, organization_name, location, contact]):
                 flash("All fields are required.", "error")
+                return render_template("ngo/settings.html", current_user=current_user)
+
+            if not valid_contact:
+                flash("Contact must be exactly 10 digits.", "error")
                 return render_template("ngo/settings.html", current_user=current_user)
 
             # Check if new username is already taken (if changed)
@@ -1215,7 +1237,7 @@ def ngo_settings():
                         "username": username,
                         "organization_name": organization_name,
                         "location": location,
-                        "contact": contact,
+                        "contact": valid_contact,
                     }
                 },
             )
