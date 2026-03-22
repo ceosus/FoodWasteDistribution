@@ -11,7 +11,7 @@ from flask_wtf.csrf import CSRFProtect
 from dotenv import dotenv_values
 from jinja2 import Undefined
 from pymongo import ASCENDING, DESCENDING, MongoClient
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, PyMongoError
 import requests
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -22,7 +22,10 @@ app = Flask(__name__)
 csrf = CSRFProtect(app)
 app.config.from_object(Config)
 
-mongo_client = MongoClient(app.config["MONGO_URI"])
+mongo_client = MongoClient(
+    app.config["MONGO_URI"],
+    serverSelectionTimeoutMS=int(os.getenv("MONGO_SERVER_SELECTION_TIMEOUT_MS", "5000")),
+)
 db = mongo_client[app.config["MONGO_DB_NAME"]]
 users_col = db.users
 food_col = db.food_listings
@@ -267,11 +270,15 @@ def quick_chatbot_reply(question: str, user_context: dict | None = None):
 
 
 def create_indexes() -> None:
-    users_col.create_index([("username", ASCENDING)], unique=True)
-    food_col.create_index([("donor_id", ASCENDING), ("created_at", DESCENDING)])
-    food_col.create_index([("status", ASCENDING), ("location", ASCENDING), ("category", ASCENDING)])
-    messages_col.create_index([("recipient_id", ASCENDING), ("created_at", DESCENDING)])
-    messages_col.create_index([("sender_id", ASCENDING), ("created_at", DESCENDING)])
+    try:
+        users_col.create_index([("username", ASCENDING)], unique=True)
+        food_col.create_index([("donor_id", ASCENDING), ("created_at", DESCENDING)])
+        food_col.create_index([("status", ASCENDING), ("location", ASCENDING), ("category", ASCENDING)])
+        messages_col.create_index([("recipient_id", ASCENDING), ("created_at", DESCENDING)])
+        messages_col.create_index([("sender_id", ASCENDING), ("created_at", DESCENDING)])
+    except PyMongoError:
+        # Allow app startup in environments where Mongo is unavailable (e.g., tests).
+        pass
 
 
 create_indexes()
