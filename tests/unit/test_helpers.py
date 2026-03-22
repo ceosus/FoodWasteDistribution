@@ -38,6 +38,16 @@ def test_parse_coordinates_success_and_rounding():
     assert lng == 79.861244
 
 
+def test_parse_contact_number_accepts_exactly_10_digits():
+    assert app_module.parse_contact_number("0712345678") == "0712345678"
+
+
+def test_parse_contact_number_rejects_invalid_values():
+    assert app_module.parse_contact_number("712345678") is None
+    assert app_module.parse_contact_number("07123-45678") is None
+    assert app_module.parse_contact_number("07123456789") is None
+
+
 def test_quick_chatbot_reply_for_guest_login_status():
     reply = app_module.quick_chatbot_reply(
         "am i logged in",

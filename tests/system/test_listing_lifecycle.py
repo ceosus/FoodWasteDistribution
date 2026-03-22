@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 
-def register_user(client, username, password, role, organization="Org", location="City", contact="123456"):
+def register_user(client, username, password, role, organization="Org", location="City", contact="0712345678"):
     return client.post(
         "/register",
         data={
