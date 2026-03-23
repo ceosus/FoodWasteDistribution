@@ -16,6 +16,9 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - Protected routes with role checks
 - Donor food listing CRUD and status workflow
 - NGO filtering, claim flow, and receive confirmation
+- Configurable billing workflow with invoice generation for claimed/collected listings
+- Donor and NGO invoice view + print pages with access control
+- Configurable donation pricing rule (`> 0` by default, optional `>= 0`)
 - Two-way in-app messaging between donor and NGO
 - Project-only chatbot with API key auto-rotation
 - Flash messages for success/error feedback
@@ -79,6 +82,21 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - `is_read`
 - `created_at`
 
+### `invoices`
+- `invoice_number` (unique)
+- `listing_id`
+- `donor_id`
+- `ngo_id`
+- `food_name`
+- `quantity`
+- `unit_price`
+- `subtotal`
+- `tax`
+- `total`
+- `currency`
+- `status`
+- `created_at`
+
 ## Setup Instructions
 1. Open terminal and move to project folder:
    ```bash
@@ -107,6 +125,9 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
    MONGO_PASSWORD=your_password
    MONGO_CLUSTER=cluster0.xxxxx.mongodb.net
    MONGO_DATABASE=foodwaste_db
+
+   # Billing feature toggle
+   BILLING_ENABLED=true
 
    # Donation price business rule
    # false (default): price must be > 0
@@ -138,7 +159,18 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
 - `/login` -> Authenticate user
 - Donor -> `/donor/dashboard`
 - NGO -> `/ngo/dashboard`
+- Billing -> NGO can generate from claimed/collected listing; donor and NGO can open `/invoices/<invoice_id>`
 - Authenticated users -> `/chatbot` for project-restricted Q&A
+
+## Billing and Invoices
+- Turn on with `BILLING_ENABLED=true`.
+- NGO users can generate invoices only for their claimed/collected listings.
+- Invoice actions appear in NGO dashboard/claim pages and donor dashboard when invoice exists.
+- Both linked donor and NGO can view and print invoice pages.
+- Billing routes:
+   - `POST /ngo/food/<listing_id>/invoice`
+   - `GET /invoices/<invoice_id>`
+   - `GET /invoices/<invoice_id>/print`
 
 ## Testing
 The project now includes test coverage at four levels using `pytest` and an in-memory Mongo mock.
@@ -196,6 +228,11 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 | Registration Fields | Required registration fields in current build |
 | Donor Listing | How donors create listings |
 | Donation Pricing | Low-cost donation model (not free) |
+| Billing Availability | Billing depends on feature toggle |
+| Invoice Generation | NGO can generate bill for eligible listings |
+| Invoice Access | Donor and NGO access rules for invoice pages |
+| Invoice Navigation | Where to find generate/view/print actions |
+| Invoice Contents | What fields are included in invoice |
 | NGO Claim Flow | NGO claim steps and availability workflow |
 | Collection Status | Status transitions (`available -> claimed -> collected`) |
 | Messaging | In-app donor/NGO conversation support |
@@ -212,14 +249,19 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 4. Registration Fields: "Current required fields and no app-download step"
 5. Donor Listing: "Add food with quantity, price, expiry, location"
 6. Donation Pricing: "Low-cost donation pricing (default > 0, optional config allows 0)"
-7. NGO Claim Flow: "Browse available listings and claim"
-8. Collection Status: "available -> claimed -> collected"
-9. Messaging: "Two-way in-app donor/NGO messaging"
-10. Map and Distance: "Map pin, address suggestions, distance/ETA guidance"
-11. Chatbot Scope: "FWD-only questions"
-12. Notifications: "No native app push in current web build"
-13. Acknowledgement Handling: "Short acknowledgements return FWD-specific next-help options"
-14. Greeting Handling: "Greetings return FWD workflow-focused support guidance"
+7. Billing Availability: "Billing works when BILLING_ENABLED is enabled"
+8. Invoice Generation: "NGO can generate invoices for claimed/collected listings"
+9. Invoice Access: "Donor and NGO can open linked invoices only"
+10. Invoice Navigation: "Dashboards expose generate/view/print bill actions"
+11. Invoice Contents: "Invoice includes number, quantities, pricing totals, and party details"
+12. NGO Claim Flow: "Browse available listings and claim"
+13. Collection Status: "available -> claimed -> collected"
+14. Messaging: "Two-way in-app donor/NGO messaging"
+15. Map and Distance: "Map pin, address suggestions, distance/ETA guidance"
+16. Chatbot Scope: "FWD-only questions"
+17. Notifications: "No native app push in current web build"
+18. Acknowledgement Handling: "Short acknowledgements return FWD-specific next-help options"
+19. Greeting Handling: "Greetings return FWD workflow-focused support guidance"
 
 ### How "Training" Is Applied Here
 - Current implementation uses grounding (dataset-backed context injection) per question.
