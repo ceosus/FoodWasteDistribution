@@ -44,8 +44,38 @@
   {
     "intent": "Donation Pricing",
     "question": "Is food free in FWD?",
-    "answer": "FWD supports low-cost donation pricing per unit. The donation price must be greater than zero.",
+    "answer": "FWD supports low-cost donation pricing per unit. By default, donation price must be greater than zero. If DONATION_PRICE_ALLOW_ZERO is enabled, zero is also allowed.",
     "keywords": ["price", "cost", "free", "donation price", "rate"]
+  },
+  {
+    "intent": "Billing Availability",
+    "question": "When is billing available in FWD?",
+    "answer": "Billing features are available when BILLING_ENABLED is turned on in configuration. When disabled, invoice generation actions are hidden or blocked.",
+    "keywords": ["billing", "bill", "invoice", "billing enabled", "feature flag", "config"]
+  },
+  {
+    "intent": "Invoice Generation",
+    "question": "Who can generate an invoice and for which listings?",
+    "answer": "NGO users can generate invoices for their own claimed or collected listings. A listing can have only one NGO invoice record for that NGO-listing pair.",
+    "keywords": ["invoice", "generate", "ngo", "claimed", "collected", "eligible"]
+  },
+  {
+    "intent": "Invoice Access",
+    "question": "Can donors also view invoices?",
+    "answer": "Yes. Both donor and NGO involved in an invoice can open the invoice page and print view, but users cannot access invoices that are not linked to them.",
+    "keywords": ["donor", "ngo", "view invoice", "print", "authorized", "access"]
+  },
+  {
+    "intent": "Invoice Navigation",
+    "question": "Where do I find invoice actions in dashboards?",
+    "answer": "When billing is enabled, NGO dashboards show Generate Bill, View Bill, and Print for eligible listings. Donor dashboard shows Billing actions (View Bill and Print) once an invoice exists.",
+    "keywords": ["dashboard", "generate bill", "view bill", "print bill", "donor dashboard", "ngo dashboard"]
+  },
+  {
+    "intent": "Invoice Contents",
+    "question": "What details are included in an FWD invoice?",
+    "answer": "Invoices include invoice number, donor and NGO details, food item, quantity, unit price, subtotal, tax, total, and listing pickup/location details.",
+    "keywords": ["invoice details", "invoice number", "subtotal", "tax", "total", "unit price", "quantity"]
   },
   {
     "intent": "NGO Claim Flow",
