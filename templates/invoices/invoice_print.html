@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; padding: 24px; background: #fff; }
+        .container { max-width: 780px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .title { font-size: 26px; font-weight: 700; margin: 0; }
+        .muted { color: #475569; font-size: 13px; }
+        .meta { margin: 4px 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+        .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+        .card h3 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.06em; color: #334155; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px; font-size: 14px; text-align: left; }
+        th { background: #f8fafc; }
+        .totals { margin-top: 12px; width: 280px; margin-left: auto; }
+        .totals .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .totals .total { border-top: 1px solid #cbd5e1; margin-top: 4px; padding-top: 8px; font-weight: 700; font-size: 16px; }
+        @media print {
+            body { padding: 0; }
+            .container { max-width: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <main class="container">
+        <header class="header">
+            <div>
+                <h1 class="title">FWD Invoice</h1>
+                <p class="muted meta">Invoice No: {{ invoice.invoice_number }}</p>
+                <p class="muted meta">Issued: {{ invoice.created_at|datetime_fmt }}</p>
+            </div>
+            <div>
+                <p class="muted">Status: {{ invoice.status|capitalize }}</p>
+            </div>
+        </header>
+
+        <section class="grid">
+            <article class="card">
+                <h3>Donor</h3>
+                <p>{{ donor.organization_name if donor else '-' }}</p>
+                <p class="muted">{{ donor.location if donor else '-' }}</p>
+            </article>
+            <article class="card">
+                <h3>NGO</h3>
+                <p>{{ ngo.organization_name if ngo else '-' }}</p>
+                <p class="muted">{{ ngo.location if ngo else '-' }}</p>
+            </article>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Line Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ invoice.food_name }}</td>
+                    <td>{{ invoice.quantity }}</td>
+                    <td>{{ invoice.unit_price|money_fmt }}</td>
+                    <td>{{ invoice.subtotal|money_fmt }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <section class="totals">
+            <div class="row"><span>Subtotal</span><span>{{ invoice.subtotal|money_fmt }}</span></div>
+            <div class="row"><span>Tax</span><span>{{ invoice.tax|money_fmt }}</span></div>
+            <div class="row total"><span>Total</span><span>{{ invoice.total|money_fmt }}</span></div>
+        </section>
+
+        <p class="muted" style="margin-top: 16px;">Pickup: {{ listing.pickup_address if listing else '-' }}, {{ listing.location if listing else '-' }}</p>
+    </main>
+</body>
+</html>

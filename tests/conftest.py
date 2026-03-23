@@ -16,6 +16,7 @@ def flask_app():
     app_module.users_col = fake_db.users
     app_module.food_col = fake_db.food_listings
     app_module.messages_col = fake_db.messages
+    app_module.invoices_col = fake_db.invoices
     app_module.create_indexes()
 
     app_module.CHATBOT_API_KEYS = []

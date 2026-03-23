@@ -99,6 +99,26 @@
                                 Message Donor
                             </a>
 
+                            {% if billing_enabled and item.status in ['claimed', 'collected'] %}
+                                {% if item.invoice_id %}
+                                    <div class="mt-3 grid grid-cols-2 gap-2">
+                                        <a href="{{ url_for('view_invoice', invoice_id=item.invoice_id) }}" class="inline-block rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-center text-sm font-semibold text-violet-700 hover:bg-violet-100">
+                                            View Bill
+                                        </a>
+                                        <a href="{{ url_for('print_invoice', invoice_id=item.invoice_id) }}" target="_blank" class="inline-block rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                                            Print Bill
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <form method="post" action="{{ url_for('create_invoice_from_listing', listing_id=item._id) }}" class="mt-3">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button data-confirm="Generate bill for this listing?" type="submit" class="w-full rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100">
+                                            Generate Bill
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+
                             {% if item.status == 'claimed' %}
                                 <form method="post" action="{{ url_for('ngo_mark_received', listing_id=item._id) }}" class="mt-3">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>

@@ -22,6 +22,11 @@ def test_parse_donation_price_rules():
     assert app_module.parse_donation_price("abc") is None
 
 
+def test_parse_donation_price_rules_allow_zero_mode():
+    assert app_module.parse_donation_price("0", allow_zero=True) == 0.0
+    assert app_module.parse_donation_price("-0.01", allow_zero=True) is None
+
+
 def test_parse_coordinates_requires_both_values():
     lat, lng, err = app_module.parse_coordinates("6.9", "")
 

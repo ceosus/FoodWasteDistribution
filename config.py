@@ -9,6 +9,8 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
     MAINTENANCE_MODE = os.getenv("MAINTENANCE_MODE", "false").lower() == "true"
+    BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
+    DONATION_PRICE_ALLOW_ZERO = os.getenv("DONATION_PRICE_ALLOW_ZERO", "false").lower() == "true"
     WTF_CSRF_ENABLED = True
     SESSION_COOKIE_SECURE = os.getenv(
         "SESSION_COOKIE_SECURE",

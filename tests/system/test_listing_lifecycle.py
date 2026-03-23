@@ -76,3 +76,39 @@ def test_full_listing_lifecycle_from_donor_to_ngo(client, app_state):
 
     collected_listing = app_state.food_col.find_one({"_id": created_listing["_id"]})
     assert collected_listing["status"] == "collected"
+
+
+def test_ngo_can_generate_invoice_for_claimed_listing(client, app_state):
+    app_state.app.config["BILLING_ENABLED"] = True
+
+    register_user(client, "donor_bill", "secret123", "donor", organization="Donor Org")
+    register_user(client, "ngo_bill", "secret123", "ngo", organization="NGO Org")
+
+    login_user(client, "donor_bill", "secret123")
+    client.post("/donor/food/add", data=donor_listing_payload(food_name="Rice"), follow_redirects=True)
+    created_listing = app_state.food_col.find_one({"food_name": "Rice"})
+    client.post("/logout", follow_redirects=True)
+
+    login_user(client, "ngo_bill", "secret123")
+    client.post(f"/ngo/food/{created_listing['_id']}/claim", follow_redirects=True)
+
+    invoice_response = client.post(
+        f"/ngo/food/{created_listing['_id']}/invoice",
+        follow_redirects=True,
+    )
+
+    assert invoice_response.status_code == 200
+    assert b"Invoice generated successfully" in invoice_response.data
+
+    invoice = app_state.invoices_col.find_one({"listing_id": created_listing["_id"]})
+    assert invoice is not None
+    assert invoice["invoice_number"].startswith("INV-")
+    assert invoice["quantity"] == created_listing["quantity"]
+    assert invoice["unit_price"] == float(created_listing["donation_price"])
+
+    client.post("/logout", follow_redirects=True)
+    login_user(client, "donor_bill", "secret123")
+    donor_invoice_response = client.get(f"/invoices/{invoice['_id']}", follow_redirects=True)
+
+    assert donor_invoice_response.status_code == 200
+    assert bytes(invoice["invoice_number"], "utf-8") in donor_invoice_response.data

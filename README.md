@@ -108,6 +108,11 @@ A role-based web platform where donors can post surplus food and NGOs can claim 
    MONGO_CLUSTER=cluster0.xxxxx.mongodb.net
    MONGO_DATABASE=foodwaste_db
 
+   # Donation price business rule
+   # false (default): price must be > 0
+   # true: price can be 0 or greater
+   DONATION_PRICE_ALLOW_ZERO=false
+
    # Chatbot keys (any of these names are supported)
    FWD_API_KEY_1=your_key_1
    FWD_API_KEY_2=your_key_2
@@ -206,7 +211,7 @@ This dataset is used as runtime knowledge context so responses stay aligned with
 3. Login: "Username/password login routes to role dashboard"
 4. Registration Fields: "Current required fields and no app-download step"
 5. Donor Listing: "Add food with quantity, price, expiry, location"
-6. Donation Pricing: "Low-cost donation pricing, must be > 0"
+6. Donation Pricing: "Low-cost donation pricing (default > 0, optional config allows 0)"
 7. NGO Claim Flow: "Browse available listings and claim"
 8. Collection Status: "available -> claimed -> collected"
 9. Messaging: "Two-way in-app donor/NGO messaging"

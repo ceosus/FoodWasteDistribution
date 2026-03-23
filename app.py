@@ -51,6 +51,7 @@ db = mongo_client[app.config["MONGO_DB_NAME"]]
 users_col = db.users
 food_col = db.food_listings
 messages_col = db.messages
+invoices_col = db.invoices
 
 CHATBOT_MODEL = "llama-3.1-8b-instant"
 CHATBOT_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
@@ -335,6 +336,10 @@ def create_indexes() -> None:
         food_col.create_index([("status", ASCENDING), ("location", ASCENDING), ("category", ASCENDING)])
         messages_col.create_index([("recipient_id", ASCENDING), ("created_at", DESCENDING)])
         messages_col.create_index([("sender_id", ASCENDING), ("created_at", DESCENDING)])
+        invoices_col.create_index([("invoice_number", ASCENDING)], unique=True)
+        invoices_col.create_index([("listing_id", ASCENDING), ("ngo_id", ASCENDING)], unique=True)
+        invoices_col.create_index([("ngo_id", ASCENDING), ("created_at", DESCENDING)])
+        invoices_col.create_index([("donor_id", ASCENDING), ("created_at", DESCENDING)])
     except PyMongoError:
         # Allow app startup in environments where Mongo is unavailable (e.g., tests).
         pass
@@ -345,6 +350,12 @@ create_indexes()
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def generate_invoice_number() -> str:
+    stamp = utcnow().strftime("%Y%m%d%H%M%S")
+    suffix = str(ObjectId())[-6:].upper()
+    return f"INV-{stamp}-{suffix}"
 
 
 def parse_object_id(value: str):
@@ -401,14 +412,15 @@ def parse_expiry(expiry_input: str):
         return None
 
 
-def parse_donation_price(price_input: str):
+def parse_donation_price(price_input: str, allow_zero: bool = False):
     if not price_input:
         return None
     try:
         price = float(price_input)
     except ValueError:
         return None
-    if price <= 0:
+    minimum_value = 0 if allow_zero else 0.01
+    if price < minimum_value:
         return None
     return round(price, 2)
 
@@ -574,6 +586,7 @@ def inject_user_context():
         "current_username": session.get("username"),
         "is_authenticated": "user_id" in session,
         "unread_messages": unread_messages,
+        "billing_enabled": app.config.get("BILLING_ENABLED", False),
     }
 
 
@@ -764,6 +777,16 @@ def donor_dashboard():
         claimant = claimed_users.get(claimed_by) if claimed_by else None
         item["claimed_org_name"] = claimant.get("organization_name") if claimant else None
 
+    if app.config.get("BILLING_ENABLED", False) and listings:
+        listing_ids = [item.get("_id") for item in listings if item.get("_id")]
+        invoice_docs = invoices_col.find(
+            {"donor_id": donor_id, "listing_id": {"$in": listing_ids}},
+            {"listing_id": 1},
+        )
+        invoice_lookup = {doc.get("listing_id"): str(doc.get("_id")) for doc in invoice_docs}
+        for item in listings:
+            item["invoice_id"] = invoice_lookup.get(item.get("_id"))
+
     mapped_listings = [
         {
             "id": str(item.get("_id")),
@@ -804,6 +827,7 @@ def donor_dashboard():
 @role_required("donor")
 def donor_add_food():
     if request.method == "POST":
+        allow_zero_price = app.config.get("DONATION_PRICE_ALLOW_ZERO", False)
         donor_id = parse_object_id(session.get("user_id"))
         food_name = request.form.get("food_name", "").strip()
         quantity_raw = request.form.get("quantity", "").strip()
@@ -817,8 +841,8 @@ def donor_add_food():
         category = request.form.get("category", "").strip().lower()
 
         expiry = parse_expiry(expiry_input)
-        donation_price = parse_donation_price(donation_price_raw)
-        if not all([food_name, quantity_raw, expiry, location, description, category, donation_price, pickup_address]):
+        donation_price = parse_donation_price(donation_price_raw, allow_zero=allow_zero_price)
+        if not all([food_name, quantity_raw, expiry, location, description, category, pickup_address]):
             flash("All fields are required, and expiry must be valid.", "error")
             return render_template("donor/add_food.html")
 
@@ -835,7 +859,10 @@ def donor_add_food():
             return render_template("donor/add_food.html")
 
         if donation_price is None:
-            flash("Donation price must be greater than 0.", "error")
+            if allow_zero_price:
+                flash("Donation price cannot be negative.", "error")
+            else:
+                flash("Donation price must be greater than 0.", "error")
             return render_template("donor/add_food.html")
 
         latitude, longitude, coord_error = parse_coordinates(latitude_raw, longitude_raw)
@@ -876,6 +903,7 @@ def donor_add_food():
 @role_required("donor")
 def donor_edit_food(listing_id):
     donor_id = parse_object_id(session.get("user_id"))
+    allow_zero_price = app.config.get("DONATION_PRICE_ALLOW_ZERO", False)
     obj_id = parse_object_id(listing_id)
     if not obj_id:
         flash("Invalid listing id.", "error")
@@ -903,8 +931,8 @@ def donor_edit_food(listing_id):
         category = request.form.get("category", "").strip().lower()
 
         expiry = parse_expiry(expiry_input)
-        donation_price = parse_donation_price(donation_price_raw)
-        if not all([food_name, quantity_raw, expiry, location, description, category, donation_price, pickup_address]):
+        donation_price = parse_donation_price(donation_price_raw, allow_zero=allow_zero_price)
+        if not all([food_name, quantity_raw, expiry, location, description, category, pickup_address]):
             flash("All fields are required, and expiry must be valid.", "error")
             return render_template("donor/add_food.html", listing=listing, is_edit=True)
 
@@ -921,7 +949,10 @@ def donor_edit_food(listing_id):
             return render_template("donor/add_food.html", listing=listing, is_edit=True)
 
         if donation_price is None:
-            flash("Donation price must be greater than 0.", "error")
+            if allow_zero_price:
+                flash("Donation price cannot be negative.", "error")
+            else:
+                flash("Donation price must be greater than 0.", "error")
             return render_template("donor/add_food.html", listing=listing, is_edit=True)
 
         latitude, longitude, coord_error = parse_coordinates(latitude_raw, longitude_raw)
@@ -1130,6 +1161,16 @@ def ngo_dashboard():
     value_result = list(food_col.aggregate(value_pipeline))
     total_claimed_value = value_result[0].get("total_value", 0) if value_result else 0
 
+    if app.config.get("BILLING_ENABLED", False) and recent_claims:
+        recent_listing_ids = [item.get("_id") for item in recent_claims if item.get("_id")]
+        invoice_docs = invoices_col.find(
+            {"ngo_id": ngo_id, "listing_id": {"$in": recent_listing_ids}},
+            {"listing_id": 1},
+        )
+        invoice_lookup = {doc.get("listing_id"): str(doc.get("_id")) for doc in invoice_docs}
+        for item in recent_claims:
+            item["invoice_id"] = invoice_lookup.get(item.get("_id"))
+
     return render_template(
         "ngo/dashboard.html",
         available_count=available_count,
@@ -1188,6 +1229,16 @@ def ngo_claim_food():
     for item in claimed_history:
         donor = donors.get(item.get("donor_id"))
         item["donor_org_name"] = donor.get("organization_name") if donor else None
+
+    if app.config.get("BILLING_ENABLED", False) and claimed_history:
+        claimed_listing_ids = [item.get("_id") for item in claimed_history if item.get("_id")]
+        invoice_docs = invoices_col.find(
+            {"ngo_id": ngo_id, "listing_id": {"$in": claimed_listing_ids}},
+            {"listing_id": 1},
+        )
+        invoice_lookup = {doc.get("listing_id"): str(doc.get("_id")) for doc in invoice_docs}
+        for item in claimed_history:
+            item["invoice_id"] = invoice_lookup.get(item.get("_id"))
 
     mapped_listings = [
         {
@@ -1258,6 +1309,116 @@ def ngo_mark_received(listing_id):
         flash("Unable to mark listing as received.", "error")
 
     return redirect(url_for("ngo_claim_food"))
+
+
+@app.post("/ngo/food/<listing_id>/invoice")
+@login_required
+@role_required("ngo")
+def create_invoice_from_listing(listing_id):
+    if not app.config.get("BILLING_ENABLED", False):
+        flash("Billing is disabled right now.", "error")
+        return redirect(url_for("ngo_claim_food"))
+
+    ngo_id = parse_object_id(session.get("user_id"))
+    obj_id = parse_object_id(listing_id)
+    if not obj_id:
+        flash("Invalid listing id.", "error")
+        return redirect(url_for("ngo_claim_food"))
+
+    listing = food_col.find_one({"_id": obj_id, "claimed_by": ngo_id, "status": {"$in": ["claimed", "collected"]}})
+    if not listing:
+        flash("Only your claimed or collected listings can be billed.", "error")
+        return redirect(url_for("ngo_claim_food"))
+
+    existing_invoice = invoices_col.find_one({"listing_id": obj_id, "ngo_id": ngo_id})
+    if existing_invoice:
+        return redirect(url_for("view_invoice", invoice_id=existing_invoice.get("_id")))
+
+    quantity = int(listing.get("quantity", 0) or 0)
+    unit_price = round(float(listing.get("donation_price", 0) or 0), 2)
+    subtotal = round(quantity * unit_price, 2)
+    tax_amount = 0.0
+    total_amount = round(subtotal + tax_amount, 2)
+
+    invoice_doc = {
+        "invoice_number": generate_invoice_number(),
+        "listing_id": obj_id,
+        "donor_id": listing.get("donor_id"),
+        "ngo_id": ngo_id,
+        "food_name": listing.get("food_name", "Food Listing"),
+        "quantity": quantity,
+        "unit_price": unit_price,
+        "subtotal": subtotal,
+        "tax": tax_amount,
+        "total": total_amount,
+        "currency": "LKR",
+        "status": "issued",
+        "created_at": utcnow(),
+    }
+
+    try:
+        inserted = invoices_col.insert_one(invoice_doc)
+    except DuplicateKeyError:
+        # Handle race condition where two requests try to bill the same listing.
+        existing_invoice = invoices_col.find_one({"listing_id": obj_id, "ngo_id": ngo_id})
+        if existing_invoice:
+            return redirect(url_for("view_invoice", invoice_id=existing_invoice.get("_id")))
+        flash("Unable to create invoice right now. Please try again.", "error")
+        return redirect(url_for("ngo_claim_food"))
+
+    flash("Invoice generated successfully.", "success")
+    return redirect(url_for("view_invoice", invoice_id=inserted.inserted_id))
+
+
+def get_authorized_invoice(invoice_id: str, user_id: ObjectId | None):
+    if not user_id:
+        return None
+
+    obj_id = parse_object_id(invoice_id)
+    if not obj_id:
+        return None
+
+    return invoices_col.find_one(
+        {
+            "_id": obj_id,
+            "$or": [
+                {"ngo_id": user_id},
+                {"donor_id": user_id},
+            ],
+        }
+    )
+
+
+@app.get("/invoices/<invoice_id>")
+@login_required
+def view_invoice(invoice_id):
+    user_id = parse_object_id(session.get("user_id"))
+    invoice = get_authorized_invoice(invoice_id, user_id)
+    if not invoice:
+        flash("Invoice not found or not accessible.", "error")
+        return redirect(url_for("home"))
+
+    donor = users_col.find_one({"_id": invoice.get("donor_id")}, {"organization_name": 1, "username": 1, "location": 1})
+    ngo = users_col.find_one({"_id": invoice.get("ngo_id")}, {"organization_name": 1, "username": 1, "location": 1})
+    listing = food_col.find_one({"_id": invoice.get("listing_id")}, {"location": 1, "pickup_address": 1, "status": 1, "expiry": 1})
+
+    return render_template("invoices/invoice.html", invoice=invoice, donor=donor, ngo=ngo, listing=listing)
+
+
+@app.get("/invoices/<invoice_id>/print")
+@login_required
+def print_invoice(invoice_id):
+    user_id = parse_object_id(session.get("user_id"))
+    invoice = get_authorized_invoice(invoice_id, user_id)
+    if not invoice:
+        flash("Invoice not found or not accessible.", "error")
+        return redirect(url_for("home"))
+
+    donor = users_col.find_one({"_id": invoice.get("donor_id")}, {"organization_name": 1, "username": 1, "location": 1})
+    ngo = users_col.find_one({"_id": invoice.get("ngo_id")}, {"organization_name": 1, "username": 1, "location": 1})
+    listing = food_col.find_one({"_id": invoice.get("listing_id")}, {"location": 1, "pickup_address": 1, "status": 1, "expiry": 1})
+
+    return render_template("invoices/invoice_print.html", invoice=invoice, donor=donor, ngo=ngo, listing=listing)
 
 
 @app.route("/ngo/settings", methods=["GET", "POST"])

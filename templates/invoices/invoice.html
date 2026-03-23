@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} | FWD{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl space-y-6">
+    <div class="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white shadow-lg shadow-violet-300/40">
+        <p class="text-xs uppercase tracking-wide text-violet-100">Invoice</p>
+        <h1 class="mt-1 text-2xl font-bold">{{ invoice.invoice_number }}</h1>
+        <p class="mt-2 text-sm text-violet-100">Issued on {{ invoice.created_at|datetime_fmt }}</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+            <a href="{{ url_for('print_invoice', invoice_id=invoice._id) }}" target="_blank" class="inline-block rounded-lg bg-white/95 px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-white">
+                Print Bill
+            </a>
+            <a href="{{ url_for('ngo_claim_food') }}" class="inline-block rounded-lg border border-white/40 bg-transparent px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                Back to Claims
+            </a>
+        </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Donor</h2>
+            <p class="mt-2 text-sm text-slate-800">{{ donor.organization_name if donor else '-' }}</p>
+            <p class="text-sm text-slate-500">{{ donor.location if donor else '-' }}</p>
+        </article>
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">NGO</h2>
+            <p class="mt-2 text-sm text-slate-800">{{ ngo.organization_name if ngo else '-' }}</p>
+            <p class="text-sm text-slate-500">{{ ngo.location if ngo else '-' }}</p>
+        </article>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+            <h2 class="text-lg font-bold text-slate-900">Bill Details</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-slate-600">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Item</th>
+                        <th class="px-4 py-3 font-semibold">Qty</th>
+                        <th class="px-4 py-3 font-semibold">Unit Price</th>
+                        <th class="px-4 py-3 font-semibold">Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-t border-slate-100">
+                        <td class="px-4 py-3 font-semibold text-slate-900">{{ invoice.food_name }}</td>
+                        <td class="px-4 py-3">{{ invoice.quantity }}</td>
+                        <td class="px-4 py-3 money-value">{{ invoice.unit_price|money_fmt }}</td>
+                        <td class="px-4 py-3 money-value">{{ invoice.subtotal|money_fmt }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="border-t border-slate-200 px-5 py-4">
+            <div class="ml-auto w-full max-w-xs space-y-2 text-sm">
+                <div class="flex items-center justify-between"><span class="text-slate-600">Subtotal</span><span class="money-value font-semibold">{{ invoice.subtotal|money_fmt }}</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-600">Tax</span><span class="money-value font-semibold">{{ invoice.tax|money_fmt }}</span></div>
+                <div class="flex items-center justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900"><span>Total</span><span class="money-value">{{ invoice.total|money_fmt }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+        <p><span class="font-semibold text-slate-700">Pickup Address:</span> {{ listing.pickup_address if listing else '-' }}</p>
+        <p class="mt-1"><span class="font-semibold text-slate-700">Location:</span> {{ listing.location if listing else '-' }}</p>
+        <p class="mt-1"><span class="font-semibold text-slate-700">Listing Status:</span> {{ listing.status|capitalize if listing and listing.status else '-' }}</p>
+    </div>
+</section>
+{% endblock %}
