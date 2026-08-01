@@ -291,3 +291,7 @@ To restore normal site behavior, set:
 ```env
 MAINTENANCE_MODE=false
 ```
+## Contributors:
+- CEOSUS
+- Ritik Barnwal
+- Prashant Raj
